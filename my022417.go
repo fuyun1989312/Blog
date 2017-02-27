@@ -3,7 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -13,7 +13,8 @@ type SimpleChaincode struct {
 }
 
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	var A, B, C, D string // Entities
+	var A, B string    // Entities
+	var Aval, Bval int // Asset holdings
 	var err error
 
 	if len(args) != 4 {
@@ -22,17 +23,24 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 	// Initialize the chaincode
 	A = args[0]
-	B = args[1]
-	C = args[2]
-	D = args[3]
+	Aval, err = strconv.Atoi(args[1])
+	if err != nil {
+		return nil, errors.New("Expecting integer value for asset holding")
+	}
+	B = args[2]
+	Bval, err = strconv.Atoi(args[3])
+	if err != nil {
+		return nil, errors.New("Expecting integer value for asset holding")
+	}
+	fmt.Printf("Aval = %d, Bval = %d\n", Aval, Bval)
 
-	stringByte := "\x00" + strings.Join(B, "\x20\x00")
-	err = stub.PutState(A, []byte(stringByte))
+	// Write the state to the ledger
+	err = stub.PutState(A, []byte(strconv.Itoa(Aval)))
 	if err != nil {
 		return nil, err
 	}
-	stringByte := "\x00" + strings.Join(D, "\x20\x00")
-	err = stub.PutState(C, []byte(stringByte))
+
+	err = stub.PutState(B, []byte(strconv.Itoa(Bval)))
 	if err != nil {
 		return nil, err
 	}
